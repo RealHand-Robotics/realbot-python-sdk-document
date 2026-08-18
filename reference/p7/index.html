@@ -248,7 +248,8 @@ pose = Pose(x=0.3, y=0.1, z=0.5, rx=0.0, ry=0.5, rz=0.0)
 <tbody>
 <tr><td><code>enable()</code></td><td>Enables all 7 joint motors. This causes a brief disable/enable cycle.</td></tr>
 <tr><td><code>disable()</code></td><td>Disables all 7 joint motors.</td></tr>
-<tr><td><code>emergency_stop()</code></td><td>Performs an emergency stop and locks the arm at its current pose.</td></tr>
+<tr><td><code>emergency_stop(enable: bool = True)</code></td><td>Sets the emergency-stop state. <code>True</code> (the default) engages the stop; <code>False</code> releases it and resumes the arm.</td></tr>
+<tr><td><code>resume_from_emergency_stop()</code></td><td>Releases the emergency stop and resumes the arm; equivalent to <code>emergency_stop(False)</code>.</td></tr>
 <tr><td><code>calibrate_zero()</code></td><td>Sets the current position as zero through the RBot controller.</td></tr>
 <tr><td><code>reset_error()</code></td><td>Resets error states on all joints.</td></tr>
 <tr><td><code>close()</code></td><td>Waits for motion to finish and releases the RBot controller connection. Called automatically when using <code>with</code>.</td></tr>
@@ -258,7 +259,7 @@ pose = Pose(x=0.3, y=0.1, z=0.5, rx=0.0, ry=0.5, rz=0.0)
 <h3 id="notes"><a class="header" href="#notes">Notes</a></h3>
 <ol>
 <li>Calling <code>arm.enable()</code> causes a brief disable/enable cycle.</li>
-<li>Call <code>resume_from_emergency_stop()</code> after an emergency stop, then enable the arm before sending more motion commands.</li>
+<li>Call <code>emergency_stop(True)</code> (or <code>emergency_stop()</code>) to engage the stop. Call <code>emergency_stop(False)</code> or <code>resume_from_emergency_stop()</code> to release it, then enable the arm before sending more motion commands.</li>
 </ol>
 <h2 id="control-mode"><a class="header" href="#control-mode">Control Mode</a></h2>
 <p>Only PP (Profile Position) mode is currently supported. It is configured automatically when <code>enable()</code> is called.</p>
