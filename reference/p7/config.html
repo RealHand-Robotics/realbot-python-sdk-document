@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>State Reading - Realhand Python SDK Documentation</title>
+        <title>Configuration - Realhand Python SDK Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -174,131 +174,68 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="state-reading"><a class="header" href="#state-reading">State Reading</a></h1>
-<h2 id="full-state-snapshot"><a class="header" href="#full-state-snapshot">Full State Snapshot</a></h2>
-<p>Read the complete arm state in one call, including TCP pose plus angle, velocity, acceleration, torque, and temperature for all joints.</p>
-<pre><code class="language-python">from realhand import A7
+                        <h1 id="configuration"><a class="header" href="#configuration">Configuration</a></h1>
+<h2 id="speed-and-acceleration-limits"><a class="header" href="#speed-and-acceleration-limits">Speed and Acceleration Limits</a></h2>
+<p>Set speed and acceleration limits for the 7 joints.</p>
+<pre><code class="language-python">from realhand import P7
 
-with A7(side="left", interface_name="can0") as arm:
+with P7(side="left", tcp_host="192.168.10.21") as arm:
     arm.enable()
-    state = arm.get_state()
-    print(state.pose)
-    print(f"Actual angle of the first joint: {state.joint_angles[0].angle:.4f} rad")
+    # Set the speed limit of all joints to 1.0 rad/s
+    arm.set_velocities([1.0] * 7)
+    # Set acceleration limits individually
+    arm.set_accelerations([10.0, 9.0, 8.0, 7.0, 6.0, 5.0, 4.0])
 </code></pre>
-<p><strong>Return value</strong></p>
-<ul>
-<li><code>State</code>: Contains <code>pose</code>, <code>joint_angles</code>, <code>joint_control_angles</code>, <code>joint_velocities</code>, <code>joint_control_velocities</code>, <code>joint_control_acceleration</code>, <code>joint_torques</code>, and <code>joint_temperatures</code></li>
-</ul>
-<h3 id="state-data-model"><a class="header" href="#state-data-model"><code>State</code> data model</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Field</th><th>Description</th></tr>
+<tr><th>Method</th><th>Parameter</th><th>Range</th><th>Description</th></tr>
 </thead>
 <tbody>
-<tr><td><code>pose</code></td><td>TCP pose (<code>Pose</code>)</td></tr>
-<tr><td><code>joint_angles</code></td><td>Actual angles of the 7 joints (<code>list[AngleState]</code>)</td></tr>
-<tr><td><code>joint_control_angles</code></td><td>Control angles of the 7 joints (<code>list[AngleState]</code>)</td></tr>
-<tr><td><code>joint_velocities</code></td><td>Actual velocities of the 7 joints (<code>list[VelocityState]</code>)</td></tr>
-<tr><td><code>joint_control_velocities</code></td><td>Control velocities of the 7 joints (<code>list[VelocityState]</code>)</td></tr>
-<tr><td><code>joint_control_acceleration</code></td><td>Control accelerations of the 7 joints (<code>list[AccelerationState]</code>)</td></tr>
-<tr><td><code>joint_torques</code></td><td>Actual torques of the 7 joints (<code>list[TorqueState]</code>)</td></tr>
-<tr><td><code>joint_temperatures</code></td><td>Temperatures of the 7 joints (<code>list[TemperatureState]</code>)</td></tr>
+<tr><td><code>set_velocities(velocities)</code></td><td>Velocity limits for 7 joints (rad/s)</td><td>[0.0, 20.0]</td><td>Default <code>0.5</code></td></tr>
+<tr><td><code>set_accelerations(accelerations)</code></td><td>Acceleration limits for 7 joints (rad/s²)</td><td>[0.0, 20.0]</td><td>Default <code>1.0</code></td></tr>
 </tbody>
 </table>
 </div>
-<p>Each sub-state model includes a value field and a <code>timestamp</code> (Unix time in seconds).</p>
-<h3 id="sub-state-model-fields"><a class="header" href="#sub-state-model-fields">Sub-state model fields</a></h3>
+<p><strong>Exception:</strong> <code>ValidationError</code> (exactly 7 values are required, and all values must be within range)</p>
+<h2 id="controller-parameters"><a class="header" href="#controller-parameters">Controller Parameters</a></h2>
+<p>P7 exposes motion limits through the SDK. PID tuning and parameter persistence are managed by the RBot controller and are not exposed by <code>P7</code>.</p>
+<h3 id="parameter-quick-reference"><a class="header" href="#parameter-quick-reference">Parameter Quick Reference</a></h3>
 <div class="table-wrapper">
 <table>
 <thead>
-<tr><th>Model</th><th>Value field</th><th>Timestamp field</th></tr>
+<tr><th>Parameter type</th><th>Default</th><th>Range</th></tr>
 </thead>
 <tbody>
-<tr><td><code>AngleState</code></td><td><code>.angle</code></td><td><code>.timestamp</code></td></tr>
-<tr><td><code>VelocityState</code></td><td><code>.velocity</code></td><td><code>.timestamp</code></td></tr>
-<tr><td><code>AccelerationState</code></td><td><code>.acceleration</code></td><td><code>.timestamp</code></td></tr>
-<tr><td><code>TorqueState</code></td><td><code>.torque</code></td><td><code>.timestamp</code></td></tr>
-<tr><td><code>TemperatureState</code></td><td><code>.temperature</code></td><td><code>.timestamp</code></td></tr>
+<tr><td>Speed limit</td><td>0.5 rad/s</td><td>[0.0, 20.0] rad/s</td></tr>
+<tr><td>Acceleration limit</td><td>1.0 rad/s²</td><td>[0.0, 20.0] rad/s²</td></tr>
+<tr><td><code>move_l</code> max linear speed</td><td>0.05 m/s</td><td>(0, 0.4] m/s</td></tr>
+<tr><td><code>move_l</code> max angular speed</td><td>0.3 rad/s</td><td>(0, 3.0] rad/s</td></tr>
+<tr><td><code>move_l</code> linear acceleration</td><td>0.1 m/s²</td><td>(0, 1.0] m/s²</td></tr>
+<tr><td><code>move_l</code> angular acceleration</td><td>0.1 rad/s²</td><td>(0, 1.0] rad/s²</td></tr>
 </tbody>
 </table>
 </div>
-<h2 id="read-individual-state-items"><a class="header" href="#read-individual-state-items">Read Individual State Items</a></h2>
-<p>Besides <code>get_state()</code>, the following methods return a single kind of state. All of them return lists for 7 joints, except <code>get_pose()</code>.</p>
-<pre><code class="language-python">from realhand import A7
+<h2 id="example"><a class="header" href="#example">Example</a></h2>
+<h3 id="move-after-setting-speed-and-acceleration-limits"><a class="header" href="#move-after-setting-speed-and-acceleration-limits">Move After Setting Speed and Acceleration Limits</a></h3>
+<pre><code class="language-python">from realhand import P7
 
-with A7(side="left", interface_name="can0") as arm:
+with P7(side="left", tcp_host="192.168.10.21") as arm:
     arm.enable()
-    angles = arm.get_angles()
-    velocities = arm.get_velocities()
-    temps = arm.get_temperatures()
-    pose = arm.get_pose()
-    print(f"Actual angle of the second joint: {angles[1]:.4f} rad")
-    print(f"Actual velocity of the third joint: {velocities[2]:.4f} rad/s")
-    print(f"Actual temperature of the fourth joint: {temps[3]:.1f} °C")
-    print(f"TCP: ({pose.x:.3f}m, {pose.y:.3f}m, {pose.z:.3f}m)")
-</code></pre>
-<p><strong>Return values</strong></p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Method</th><th>Return value</th><th>Unit</th></tr>
-</thead>
-<tbody>
-<tr><td><code>get_angles()</code></td><td>Actual angles of 7 joints</td><td>rad</td></tr>
-<tr><td><code>get_control_angles()</code></td><td>Control angles of 7 joints</td><td>rad</td></tr>
-<tr><td><code>get_velocities()</code></td><td>Actual velocities of 7 joints</td><td>rad/s</td></tr>
-<tr><td><code>get_control_velocities()</code></td><td>Control velocities of 7 joints</td><td>rad/s</td></tr>
-<tr><td><code>get_control_acceleration()</code></td><td>Control accelerations of 7 joints</td><td>rad/s²</td></tr>
-<tr><td><code>get_torques()</code></td><td>Actual torques of 7 joints</td><td>Nm</td></tr>
-<tr><td><code>get_temperatures()</code></td><td>Temperatures of 7 joints</td><td>°C</td></tr>
-<tr><td><code>get_pose()</code></td><td>TCP pose</td><td>m, rad</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="sensor-data"><a class="header" href="#sensor-data">Sensor Data</a></h2>
-<p>A7 uses polling to collect sensor data. <code>get_*()</code> returns the value from the latest polling cycle.</p>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Data type</th><th>Unit</th><th>Default polling interval</th><th>Maximum delay</th></tr>
-</thead>
-<tbody>
-<tr><td>Angle</td><td>rad</td><td>10 ms</td><td>≈ 10 ms</td></tr>
-<tr><td>Velocity</td><td>rad/s</td><td>10 ms</td><td>≈ 10 ms</td></tr>
-<tr><td>Torque</td><td>Nm</td><td>50 ms</td><td>≈ 50 ms</td></tr>
-<tr><td>Temperature</td><td>°C</td><td>1000 ms</td><td>≈ 1000 ms</td></tr>
-</tbody>
-</table>
-</div>
-<p>If you need lower latency, use <code>start_polling()</code> to configure different intervals for different sensor types:</p>
-<pre><code class="language-python">from realhand import A7
-from realhand.arm.a7 import SensorType
-
-with A7(side="left", interface_name="can0") as arm:
-    arm.start_polling(
-        {
-            SensorType.POSITION: 0.005,  # 5 ms = 200 Hz
-            SensorType.VELOCITY: 0.005,
-            SensorType.TORQUE: 0.1,
-            SensorType.TEMPERATURE: 2.0,
-        }
-    )
-    arm.enable()
-    arm.home()
+    arm.set_velocities([1.0] * 7)
+    arm.set_accelerations([1.0] * 7)
+    arm.home(blocking=True)
+    arm.move_j([0.0, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0], blocking=True)
 </code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../reference/a7/kinematics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../reference/p7/state.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../../reference/a7/config.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                            </a>
 
                         <div style="clear: both"></div>
                     </nav>
@@ -306,13 +243,10 @@ with A7(side="left", interface_name="can0") as arm:
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../reference/a7/kinematics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../reference/p7/state.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../../reference/a7/config.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
-                    </a>
             </nav>
 
         </div>

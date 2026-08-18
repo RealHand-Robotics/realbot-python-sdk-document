@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Kinematics - Realhand Python SDK Documentation</title>
+        <title>State Reading - Realhand Python SDK Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -174,55 +174,100 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="kinematics"><a class="header" href="#kinematics">Kinematics</a></h1>
-<h2 id="forward-kinematics"><a class="header" href="#forward-kinematics">Forward Kinematics</a></h2>
-<p>Compute the TCP pose from joint angles.</p>
-<pre><code class="language-python">pose = arm.forward_kinematics([0.0, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0])
-print(f"TCP: ({pose.x:.3f}, {pose.y:.3f}, {pose.z:.3f})")
-</code></pre>
-<p><strong>Parameter:</strong></p>
-<ul>
-<li><code>angles</code>: 7 joint angles in radians, type <code>list[float]</code></li>
-</ul>
-<p><strong>Return value:</strong></p>
-<ul>
-<li><code>Pose</code>: TCP pose</li>
-</ul>
-<h2 id="inverse-kinematics"><a class="header" href="#inverse-kinematics">Inverse Kinematics</a></h2>
-<p>Solve joint angles from a TCP pose.</p>
-<pre><code class="language-python">from realhand import Pose
+                        <h1 id="state-reading"><a class="header" href="#state-reading">State Reading</a></h1>
+<h2 id="full-state-snapshot"><a class="header" href="#full-state-snapshot">Full State Snapshot</a></h2>
+<p>Read the complete arm state in one call, including TCP pose plus angle, velocity, acceleration, torque, and temperature for all joints.</p>
+<pre><code class="language-python">from realhand import P7
 
-target = Pose(x=0.0, y=0.33, z=-0.25, rx=1.85, ry=0.0, rz=-1.57)
-angles = arm.inverse_kinematics(target)
-print(f"Joint angles: {angles}")
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    state = arm.get_state()
+    print(state.pose)
+    print(f"Actual angle of the first joint: {state.joint_angles[0].angle:.4f} rad")
 </code></pre>
-<p><strong>Parameters:</strong></p>
+<p><strong>Return value</strong></p>
 <ul>
-<li><code>pose</code>: Target TCP pose, type <code>Pose</code></li>
-<li><code>current_angles</code>: Initial IK guess for joint angles, type <code>list[float] | None</code>; when <code>None</code>, the SDK reads the motors</li>
+<li><code>State</code>: Contains <code>pose</code>, <code>joint_angles</code>, <code>joint_control_angles</code>, <code>joint_velocities</code>, <code>joint_control_velocities</code>, <code>joint_control_acceleration</code>, <code>joint_torques</code>, and <code>joint_temperatures</code></li>
 </ul>
-<p><strong>Return value:</strong></p>
-<ul>
-<li><code>list[float]</code>: 7 joint angles in radians</li>
-</ul>
-<h2 id="joint-limits"><a class="header" href="#joint-limits">Joint Limits</a></h2>
-<pre><code class="language-python"># Read the current joint limits
-limits = arm.get_joint_limits()
-print(limits)  # [(lower0, upper0), (lower1, upper1), ...]
+<h3 id="state-data-model"><a class="header" href="#state-data-model"><code>State</code> data model</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Field</th><th>Description</th></tr>
+</thead>
+<tbody>
+<tr><td><code>pose</code></td><td>TCP pose (<code>Pose</code>)</td></tr>
+<tr><td><code>joint_angles</code></td><td>Actual angles of the 7 joints (<code>list[AngleState]</code>)</td></tr>
+<tr><td><code>joint_control_angles</code></td><td>Control angles of the 7 joints (<code>list[AngleState]</code>)</td></tr>
+<tr><td><code>joint_velocities</code></td><td>Actual velocities of the 7 joints (<code>list[VelocityState]</code>)</td></tr>
+<tr><td><code>joint_control_velocities</code></td><td>Control velocities of the 7 joints (<code>list[VelocityState]</code>)</td></tr>
+<tr><td><code>joint_control_acceleration</code></td><td>Control accelerations of the 7 joints (<code>list[AccelerationState]</code>)</td></tr>
+<tr><td><code>joint_torques</code></td><td>Actual torques of the 7 joints (<code>list[TorqueState]</code>)</td></tr>
+<tr><td><code>joint_temperatures</code></td><td>Temperatures of the 7 joints (<code>list[TemperatureState]</code>)</td></tr>
+</tbody>
+</table>
+</div>
+<p>Each sub-state model includes a value field and a <code>timestamp</code> (Unix time in seconds).</p>
+<h3 id="sub-state-model-fields"><a class="header" href="#sub-state-model-fields">Sub-state model fields</a></h3>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Model</th><th>Value field</th><th>Timestamp field</th></tr>
+</thead>
+<tbody>
+<tr><td><code>AngleState</code></td><td><code>.angle</code></td><td><code>.timestamp</code></td></tr>
+<tr><td><code>VelocityState</code></td><td><code>.velocity</code></td><td><code>.timestamp</code></td></tr>
+<tr><td><code>AccelerationState</code></td><td><code>.acceleration</code></td><td><code>.timestamp</code></td></tr>
+<tr><td><code>TorqueState</code></td><td><code>.torque</code></td><td><code>.timestamp</code></td></tr>
+<tr><td><code>TemperatureState</code></td><td><code>.temperature</code></td><td><code>.timestamp</code></td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="read-individual-state-items"><a class="header" href="#read-individual-state-items">Read Individual State Items</a></h2>
+<p>Besides <code>get_state()</code>, the following methods return a single kind of state. All of them return lists for 7 joints, except <code>get_pose()</code>.</p>
+<pre><code class="language-python">from realhand import P7
 
-# Set custom joint limits
-arm.set_joint_limits([(-1.0, 1.0)] * 7)
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    angles = arm.get_angles()
+    velocities = arm.get_velocities()
+    temps = arm.get_temperatures()
+    pose = arm.get_pose()
+    print(f"Actual angle of the second joint: {angles[1]:.4f} rad")
+    print(f"Actual velocity of the third joint: {velocities[2]:.4f} rad/s")
+    print(f"Actual temperature of the fourth joint: {temps[3]:.1f} °C")
+    print(f"TCP: ({pose.x:.3f}m, {pose.y:.3f}m, {pose.z:.3f}m)")
 </code></pre>
+<p><strong>Return values</strong></p>
+<div class="table-wrapper">
+<table>
+<thead>
+<tr><th>Method</th><th>Return value</th><th>Unit</th></tr>
+</thead>
+<tbody>
+<tr><td><code>get_angles()</code></td><td>Actual angles of 7 joints</td><td>rad</td></tr>
+<tr><td><code>get_control_angles()</code></td><td>Control angles of 7 joints</td><td>rad</td></tr>
+<tr><td><code>get_velocities()</code></td><td>Actual velocities of 7 joints</td><td>rad/s</td></tr>
+<tr><td><code>get_control_velocities()</code></td><td>Control velocities of 7 joints</td><td>rad/s</td></tr>
+<tr><td><code>get_control_acceleration()</code></td><td>Control accelerations of 7 joints</td><td>rad/s²</td></tr>
+<tr><td><code>get_torques()</code></td><td>Actual torques of 7 joints</td><td>Nm</td></tr>
+<tr><td><code>get_temperatures()</code></td><td>Temperatures of 7 joints</td><td>°C</td></tr>
+<tr><td><code>get_pose()</code></td><td>TCP pose</td><td>m, rad</td></tr>
+</tbody>
+</table>
+</div>
+<h2 id="sensor-data"><a class="header" href="#sensor-data">Sensor Data</a></h2>
+<p>P7 reads state directly from the RBot controller. Calling <code>start_polling()</code> or <code>stop_polling()</code> is not required and has no effect.</p>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../reference/a7/motion.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../reference/p7/kinematics.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../../reference/a7/state.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../reference/p7/config.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -232,11 +277,11 @@ arm.set_joint_limits([(-1.0, 1.0)] * 7)
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../reference/a7/motion.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../reference/p7/kinematics.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../../reference/a7/state.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../reference/p7/config.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>

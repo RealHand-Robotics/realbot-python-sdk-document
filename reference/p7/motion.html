@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>A7 - Realhand Python SDK Documentation</title>
+        <title>Motion Control - Realhand Python SDK Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -174,209 +174,135 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="a7-arm"><a class="header" href="#a7-arm">A7 Arm</a></h1>
-<p>A7 is a self-developed 7-DoF robotic arm.</p>
-<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
-<pre><code class="language-python">from realhand import A7
+                        <h1 id="motion-control"><a class="header" href="#motion-control">Motion Control</a></h1>
+<h2 id="homing"><a class="header" href="#homing">Homing</a></h2>
+<p>Move all joints back to the zero position.</p>
+<pre><code class="language-python">from realhand import P7
 
-with A7(
-    side="left",
-    interface_name="can0",
-) as arm:
-    arm.enable()  # Enable all 7 joint motors
-    arm.home()  # Move the arm to the zero position
-    arm.disable()  # Disable all 7 joint motors
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    arm.home()  # Blocking mode
+    arm.home(blocking=False)  # Non-blocking mode
 </code></pre>
-<h3 id="constructor-parameters"><a class="header" href="#constructor-parameters">Constructor Parameters</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr>
-</thead>
-<tbody>
-<tr><td><code>side</code></td><td><code>"left"</code> | <code>"right"</code></td><td>required</td><td>Left arm or right arm</td></tr>
-<tr><td><code>interface_name</code></td><td><code>str</code></td><td>required</td><td>CAN interface name, such as <code>"can0"</code></td></tr>
-<tr><td><code>interface_type</code></td><td><code>str</code></td><td><code>"socketcan"</code></td><td>CAN interface type</td></tr>
-<tr><td><code>tcp_offset</code></td><td><code>list[float]</code></td><td><code>[0.0, 0.0, 0.0]</code></td><td>TCP offset</td></tr>
-<tr><td><code>world_frame</code></td><td><code>"urdf"</code> | <code>"maestro"</code></td><td><code>"urdf"</code></td><td>World frame convention</td></tr>
-</tbody>
-</table>
-</div>
-<p>The constructor automatically checks whether all 7 motors are online.</p>
-<p><strong>Dependency requirement:</strong> A7 relies on Pinocchio for kinematics. Install the optional <code>kinetix</code> dependency:</p>
-<pre><code class="language-bash">pip install "realhand[kinetix] @ git+https://github.com/RealHand-Robotics/realbot-python-sdk.git"
+<p><strong>Parameter:</strong></p>
+<ul>
+<li><code>blocking</code>: Whether to block until motion completes. Default is <code>True</code>.</li>
+</ul>
+<h2 id="move_j"><a class="header" href="#move_j"><code>move_j</code></a></h2>
+<p>Move the arm by sending target joint angles for each joint.</p>
+<pre><code class="language-python">from realhand import P7
+
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    arm.move_j([0.0, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0])
 </code></pre>
-<blockquote>
-<p><strong>Windows users:</strong> Pinocchio does not support installation via <code>pip</code> on Windows. Use <code>conda install pinocchio -c conda-forge</code>.</p>
-</blockquote>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>target_joints</code>: Target angles for the 7 joints in radians, type <code>list[float]</code></li>
+<li><code>blocking</code>: Whether to block until motion completes, default <code>True</code>, type <code>bool</code></li>
+</ul>
 <p><strong>Exceptions:</strong></p>
 <ul>
-<li><code>ImportError</code>: The optional <code>kinetix</code> dependency (Pinocchio) is not installed</li>
-<li><code>ValueError</code>: Invalid <code>side</code> or <code>world_frame</code> argument</li>
-<li><code>StateError</code>: Motors did not respond on the CAN bus / initial data read failed</li>
+<li><code>StateError</code>: Called again while the arm is already moving</li>
+<li><code>ValidationError</code>: Target angles exceed joint limits</li>
 </ul>
-<blockquote>
-<p><strong>URDF paths:</strong> <code>src/realhand/arm/kinetix/urdf/a7__left.urdf</code> and <code>a7__right.urdf</code></p>
-</blockquote>
-<h2 id="coordinate-frames"><a class="header" href="#coordinate-frames">Coordinate Frames</a></h2>
-<p>A7 supports two world coordinate frames selected by the <code>world_frame</code> parameter.</p>
-<h3 id="urdf-frame-default"><a class="header" href="#urdf-frame-default">URDF Frame (default)</a></h3>
-<p>This is the coordinate system defined by the URDF model file. Its origin is at the center of the arm base (<code>Base_Link</code>), as shown below:</p>
-<p align="center">
-  <img src="../../images/coordinate_urdf.png" alt="coordinate" width="30%" />
-</p>
+<h2 id="move_p"><a class="header" href="#move_p"><code>move_p</code></a></h2>
+<p>Move the arm by sending a TCP 6D pose <code>(x, y, z, rx, ry, rz)</code>. The SDK first solves inverse kinematics and then executes joint motion. The end-effector path is <strong>not guaranteed</strong> to be a straight line.</p>
+<pre><code class="language-python">from realhand import P7, Pose
 
-<ul>
-<li><strong>X axis:</strong> Positive X points from the back of the robot toward the front</li>
-<li><strong>Y axis:</strong> Positive Y points to the robot’s left side from the robot’s perspective (the viewer’s right when facing the robot)</li>
-<li><strong>Z axis:</strong> Positive Z points upward by the right-hand rule</li>
-<li><strong>Rx, Ry, Rz:</strong> Rotations are applied in Z, Y, X order, with counterclockwise as positive</li>
-</ul>
-<h3 id="maestro-frame"><a class="header" href="#maestro-frame">Maestro Frame</a></h3>
-<p>The Maestro frame applies two transformations relative to the URDF frame, as shown below:</p>
-<p align="center">
-  <img src="../../images/coordinate_maestro.png" alt="coordinate" width="30%" />
-</p>
-
-<ol>
-<li><strong>Origin translation:</strong> Moves the world origin from the base center to the center of Joint 2 (the second shoulder joint)</li>
-<li><strong>Rotate Z by 90°:</strong> Rotates the URDF axes counterclockwise by +90° around Z at the new origin</li>
-</ol>
-<p>After the transformation:</p>
-<ul>
-<li><strong>X axis:</strong> Positive X points to the robot’s right side from the robot’s perspective (the viewer’s left when facing the robot)</li>
-<li><strong>Y axis:</strong> Positive Y points from the back of the robot toward the front</li>
-<li><strong>Z axis:</strong> Positive Z points upward by the right-hand rule</li>
-</ul>
-<blockquote>
-<p><strong>Note:</strong> These coordinate definitions mainly affect the <code>Pose</code> values used by <code>move_p</code> and <code>move_l</code>. They do not affect <code>move_j</code>.</p>
-</blockquote>
-<h2 id="joint-definition"><a class="header" href="#joint-definition">Joint Definition</a></h2>
-<h3 id="zero-position"><a class="header" href="#zero-position">Zero Position</a></h3>
-<p>When all joint angles are <code>[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]</code>, the arm should be in a natural hanging pose with joints perpendicular to each other. Call <code>home()</code> to return to the zero position, shown below:</p>
-<p align="center">
-  <img src="../../images/a7_zero_point.png" alt="home" width="30%" />
-</p>
-
-<h3 id="positive-rotation-direction"><a class="header" href="#positive-rotation-direction">Positive Rotation Direction</a></h3>
-<p>Positive joint angles follow the <strong>right-hand rule</strong>: point your right thumb along the positive rotation axis, and the direction in which your fingers curl is the positive direction.</p>
-<ul>
-<li><strong>Axis <code>0 1 0</code> (positive Y):</strong> Angle increases rotate counterclockwise when viewed along +Y</li>
-<li><strong>Axis <code>1 0 0</code> (positive X):</strong> Angle increases rotate counterclockwise when viewed along +X</li>
-<li><strong>Axis <code>0 0 -1</code> (negative Z):</strong> Angle increases rotate clockwise when viewed from above</li>
-<li><strong>Axis <code>0 -1 0</code> (negative Y):</strong> Angle increases rotate clockwise when viewed along +Y</li>
-</ul>
-<h3 id="a7-left-arm-joint-list-urdf-frame"><a class="header" href="#a7-left-arm-joint-list-urdf-frame">A7 Left Arm Joint List (URDF frame)</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Index</th><th>Joint name</th><th>Physical meaning</th><th>Rotation axis (URDF)</th><th>Angle range (rad)</th></tr>
-</thead>
-<tbody>
-<tr><td>0</td><td>Left_Shoulder_Pitch_Joint</td><td>Shoulder pitch</td><td>Positive Y (<code>0 1 0</code>)</td><td>[-2.97, 1.05]</td></tr>
-<tr><td>1</td><td>Left_Shoulder_Roll_Joint</td><td>Shoulder roll</td><td>Positive X (<code>1 0 0</code>)</td><td>[-0.35, 3.49]</td></tr>
-<tr><td>2</td><td>Left_Shoulder_Yaw_Joint</td><td>Shoulder yaw (upper-arm twist)</td><td>Negative Z (<code>0 0 -1</code>)</td><td>[-2.79, 2.79]</td></tr>
-<tr><td>3</td><td>Left_Elbow_Pitch_Joint</td><td>Elbow pitch</td><td>Negative Y (<code>0 -1 0</code>)</td><td>[-0.21, 2.355]</td></tr>
-<tr><td>4</td><td>Left_Wrist_Yaw_Joint</td><td>Wrist yaw (forearm twist)</td><td>Negative Z (<code>0 0 -1</code>)</td><td>[-2.79, 2.79]</td></tr>
-<tr><td>5</td><td>Left_Wrist_Pitch_Joint</td><td>Wrist pitch</td><td>Negative Y (<code>0 -1 0</code>)</td><td>[-1.57, 1.57]</td></tr>
-<tr><td>6</td><td>Left_Wrist_Roll_Joint</td><td>Wrist roll</td><td>Positive X (<code>1 0 0</code>)</td><td>[-1.57, 1.57]</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="a7-right-arm-joint-list-urdf-frame"><a class="header" href="#a7-right-arm-joint-list-urdf-frame">A7 Right Arm Joint List (URDF frame)</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Index</th><th>Joint name</th><th>Physical meaning</th><th>Rotation axis (URDF)</th><th>Angle range (rad)</th></tr>
-</thead>
-<tbody>
-<tr><td>0</td><td>Right_Shoulder_Pitch_Joint</td><td>Shoulder pitch</td><td>Negative Y (<code>0 -1 0</code>)</td><td>[-1.05, 2.97]</td></tr>
-<tr><td>1</td><td>Right_Shoulder_Roll_Joint</td><td>Shoulder roll</td><td>Positive X (<code>1 0 0</code>)</td><td>[-3.49, 0.35]</td></tr>
-<tr><td>2</td><td>Right_Shoulder_Yaw_Joint</td><td>Shoulder yaw (upper-arm twist)</td><td>Negative Z (<code>0 0 -1</code>)</td><td>[-2.79, 2.79]</td></tr>
-<tr><td>3</td><td>Right_Elbow_Pitch_Joint</td><td>Elbow pitch</td><td>Negative Y (<code>0 -1 0</code>)</td><td>[-0.21, 2.355]</td></tr>
-<tr><td>4</td><td>Right_Wrist_Yaw_Joint</td><td>Wrist yaw (forearm twist)</td><td>Negative Z (<code>0 0 -1</code>)</td><td>[-2.79, 2.79]</td></tr>
-<tr><td>5</td><td>Right_Wrist_Pitch_Joint</td><td>Wrist pitch</td><td>Positive Y (<code>0 1 0</code>)</td><td>[-1.57, 1.57]</td></tr>
-<tr><td>6</td><td>Right_Wrist_Roll_Joint</td><td>Wrist roll</td><td>Positive X (<code>1 0 0</code>)</td><td>[-1.57, 1.57]</td></tr>
-</tbody>
-</table>
-</div>
-<h2 id="pose-tcp-pose-representation"><a class="header" href="#pose-tcp-pose-representation"><code>Pose</code> (TCP Pose) Representation</a></h2>
-<p><code>Pose</code> represents the TCP (Tool Center Point) pose. It is a Pydantic model with 6 fields:</p>
-<pre><code class="language-python">from realhand import Pose
-
-pose = Pose(x=0.3, y=0.1, z=0.5, rx=0.0, ry=0.5, rz=0.0)
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    target = Pose(x=0.0, y=0.33, z=-0.25, rx=1.85, ry=0.0, rz=-1.57)
+    arm.move_p(target)
 </code></pre>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Field</th><th>Meaning</th><th>Unit</th></tr>
-</thead>
-<tbody>
-<tr><td><code>x</code>, <code>y</code>, <code>z</code></td><td>Cartesian position</td><td>meters (m)</td></tr>
-<tr><td><code>rx</code></td><td>Rotation about X (roll), range [-π, π]</td><td>radians (rad)</td></tr>
-<tr><td><code>ry</code></td><td>Rotation about Y (pitch), range [-π/2, π/2]</td><td>radians (rad)</td></tr>
-<tr><td><code>rz</code></td><td>Rotation about Z (yaw), range [-π, π]</td><td>radians (rad)</td></tr>
-</tbody>
-</table>
-</div>
+<p><strong>Parameters:</strong></p>
 <ul>
-<li>Orientation uses <strong>extrinsic ZYX Euler angles</strong>: rotate around the world Z axis by <code>rz</code>, then the world Y axis by <code>ry</code>, and finally the world X axis by <code>rx</code>.</li>
+<li><code>target_pose</code>: Target TCP pose, type <code>realhand.arm.Pose</code></li>
+<li><code>current_angles</code>: Initial IK guess for joint angles, type <code>list[float] | None</code>; when <code>None</code>, the SDK reads the motors</li>
+<li><code>blocking</code>: Whether to block until motion completes, type <code>bool</code>, default <code>True</code></li>
 </ul>
-<h2 id="lifecycle-management"><a class="header" href="#lifecycle-management">Lifecycle Management</a></h2>
-<h3 id="api-reference"><a class="header" href="#api-reference">API Reference</a></h3>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Method</th><th>Description</th></tr>
-</thead>
-<tbody>
-<tr><td><code>enable()</code></td><td>Enables all 7 joint motors. This causes a brief disable/enable cycle.</td></tr>
-<tr><td><code>disable()</code></td><td>Disables all 7 joint motors.</td></tr>
-<tr><td><code>emergency_stop()</code></td><td>Performs an emergency stop and locks the arm at its current pose.</td></tr>
-<tr><td><code>calibrate_zero()</code></td><td>Sets the current position as zero. <strong>The arm must be disabled.</strong></td></tr>
-<tr><td><code>reset_error()</code></td><td>Resets error states on all joints.</td></tr>
-<tr><td><code>close()</code></td><td>Closes the connection: stops polling and stops the CAN scheduler after waiting for motion to finish. Called automatically when using <code>with</code>.</td></tr>
-<tr><td><code>save_params()</code></td><td>Saves current PID and other parameters to motor flash so they persist after power loss.</td></tr>
-</tbody>
-</table>
-</div>
-<h3 id="notes"><a class="header" href="#notes">Notes</a></h3>
-<ol>
-<li>Calling <code>arm.enable()</code> causes a brief disable/enable cycle.</li>
-<li>The arm must be <strong>disabled</strong> before setting the zero position.</li>
-</ol>
-<h2 id="control-mode"><a class="header" href="#control-mode">Control Mode</a></h2>
-<p>Only PP (Profile Position) mode is currently supported. It is configured automatically when <code>enable()</code> is called.</p>
-<p>You can import the <code>ControlMode</code> enum from <code>realhand</code>:</p>
-<pre><code class="language-python">from realhand import ControlMode
+<p><strong>Exceptions:</strong></p>
+<ul>
+<li><code>StateError</code>: Called again while the arm is already moving</li>
+<li><code>RuntimeError</code>: IK solving failed</li>
+</ul>
+<h2 id="move_l"><a class="header" href="#move_l"><code>move_l</code></a></h2>
+<p>Move the arm in a <strong>straight line</strong> by sending a TCP 6D pose <code>(x, y, z, rx, ry, rz)</code>. The RBot controller executes this operation synchronously, so <code>move_l</code> has no <code>blocking</code> parameter.</p>
+<pre><code class="language-python">from realhand import P7, Pose
+
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    target = Pose(x=0.0, y=0.33, z=-0.25, rx=1.85, ry=0.0, rz=-1.57)
+    arm.move_l(target)
 </code></pre>
-<h2 id="can-bus"><a class="header" href="#can-bus">CAN Bus</a></h2>
-<p><code>interface_name</code> specifies the CAN interface name (for example <code>"can0"</code>), and <code>interface_type</code> specifies the interface type (default <code>"socketcan"</code>).</p>
-<p>For more information, including Windows usage, see <a href="../can.html">CAN Bus Configuration</a>.</p>
-<h2 id="functional-modules"><a class="header" href="#functional-modules">Functional Modules</a></h2>
-<div class="table-wrapper">
-<table>
-<thead>
-<tr><th>Module</th><th>Docs</th></tr>
-</thead>
-<tbody>
-<tr><td>Motion control (<code>move_j/move_p/move_l</code>)</td><td><a href="motion.html">motion.md</a></td></tr>
-<tr><td>Kinematics (FK / IK / joint limits)</td><td><a href="kinematics.html">kinematics.md</a></td></tr>
-<tr><td>State reading (angles / speeds / torques / temperatures)</td><td><a href="state.html">state.md</a></td></tr>
-<tr><td>Parameter configuration (speed / acceleration / PID)</td><td><a href="config.html">config.md</a></td></tr>
-</tbody>
-</table>
-</div>
+<p><strong>Parameters:</strong></p>
+<ul>
+<li><code>target_pose</code>: Target TCP pose, type <code>Pose</code></li>
+<li><code>max_velocity</code>: Maximum linear speed for TCP trapezoidal planning in m/s, default <code>0.05</code>, range <code>(0, 0.4]</code></li>
+<li><code>max_angular_velocity</code>: Maximum angular speed for TCP rotation planning in rad/s, default <code>0.3</code>, range <code>(0, 3.0]</code></li>
+<li><code>acceleration</code>: Maximum linear acceleration for TCP trapezoidal planning in m/s², default <code>0.1</code>, range <code>(0, 1.0]</code></li>
+<li><code>angular_acceleration</code>: Maximum angular acceleration for TCP rotation planning in rad/s², default <code>0.1</code>, range <code>(0, 1.0]</code></li>
+<li><code>current_pose</code>: Starting TCP pose. If <code>None</code>, it is computed from <code>current_angles</code> or by reading the motors. Type <code>Pose | None</code></li>
+<li><code>current_angles</code>: Starting joint angles. If <code>None</code>, they are read from the motors. Type <code>list[float] | None</code></li>
+</ul>
+<p><strong>Exceptions:</strong></p>
+<ul>
+<li><code>StateError</code>: Called again while the arm is already moving</li>
+<li><code>ValidationError</code>: A parameter is out of range</li>
+<li><code>RuntimeError</code>: IK failed for a path waypoint</li>
+</ul>
+<h2 id="motion-status"><a class="header" href="#motion-status">Motion Status</a></h2>
+<p>Returns whether the arm is currently moving.</p>
+<pre><code class="language-python">if arm.is_moving():
+    print("Arm is moving...")
+</code></pre>
+<p><strong>Return value:</strong></p>
+<ul>
+<li><code>bool</code>: Whether the arm is moving</li>
+</ul>
+<h2 id="wait-for-motion-completion"><a class="header" href="#wait-for-motion-completion">Wait for Motion Completion</a></h2>
+<p>Block the current thread until the motion timer reaches zero. This is typically used together with <code>blocking=False</code>.</p>
+<pre><code class="language-python">arm.move_j([0.0, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0], blocking=False)
+# ... do other work ...
+arm.wait_motion_done()  # Wait for motion to finish
+</code></pre>
+<h2 id="examples"><a class="header" href="#examples">Examples</a></h2>
+<h3 id="non-blocking-motion-and-waiting"><a class="header" href="#non-blocking-motion-and-waiting">Non-Blocking Motion and Waiting</a></h3>
+<pre><code class="language-python">from realhand import P7, Pose
+
+with P7(side="left", tcp_host="192.168.10.21") as arm:
+    arm.enable()
+    arm.home()
+
+    # Set speed and acceleration
+    arm.set_velocities([1.0] * 7)
+    arm.set_accelerations([10.0] * 7)
+
+    # Non-blocking move_j: returns immediately after sending the command
+    arm.move_j([0.0, 0.0, 0.0, 1.57, 0.0, 0.0, 0.0], blocking=False)
+    print("move_j sent, arm is moving...")
+    arm.wait_motion_done()  # Wait until the motion completes
+
+    # Blocking move_p: returns only after motion is done
+    target = Pose(x=0.0, y=0.33, z=-0.25, rx=1.85, ry=0.0, rz=-1.57)
+    arm.move_p(target)
+
+    # move_l is always blocking
+    target = Pose(x=0.1, y=0.33, z=-0.2, rx=1.85, ry=0.0, rz=-1.57)
+    arm.move_l(target)
+
+    arm.home()
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-                            <a rel="prev" href="../../reference/a7lite/config.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                            <a rel="prev" href="../../reference/p7/index.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
-                            <a rel="next prefetch" href="../../reference/a7/motion.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                            <a rel="next prefetch" href="../../reference/p7/kinematics.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                                 <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                             </a>
 
@@ -386,11 +312,11 @@ pose = Pose(x=0.3, y=0.1, z=0.5, rx=0.0, ry=0.5, rz=0.0)
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-                    <a rel="prev" href="../../reference/a7lite/config.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                    <a rel="prev" href="../../reference/p7/index.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
 
-                    <a rel="next prefetch" href="../../reference/a7/motion.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
+                    <a rel="next prefetch" href="../../reference/p7/kinematics.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
                         <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
                     </a>
             </nav>
