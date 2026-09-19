@@ -3,7 +3,7 @@
     <head>
         <!-- Book generated using mdBook -->
         <meta charset="UTF-8">
-        <title>Installation - Realhand Python SDK Documentation</title>
+        <title>L30 - Realhand Python SDK Documentation</title>
 
 
         <!-- Custom HTML head -->
@@ -12,33 +12,33 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#ffffff">
 
-        <link rel="icon" href="favicon-de23e50b.svg">
-        <link rel="shortcut icon" href="favicon-8114d1fc.png">
-        <link rel="stylesheet" href="css/variables-8adf115d.css">
-        <link rel="stylesheet" href="css/general-2459343d.css">
-        <link rel="stylesheet" href="css/chrome-ae938929.css">
-        <link rel="stylesheet" href="css/print-9e4910d8.css" media="print">
+        <link rel="icon" href="../../favicon-de23e50b.svg">
+        <link rel="shortcut icon" href="../../favicon-8114d1fc.png">
+        <link rel="stylesheet" href="../../css/variables-8adf115d.css">
+        <link rel="stylesheet" href="../../css/general-2459343d.css">
+        <link rel="stylesheet" href="../../css/chrome-ae938929.css">
+        <link rel="stylesheet" href="../../css/print-9e4910d8.css" media="print">
 
         <!-- Fonts -->
-        <link rel="stylesheet" href="fonts/fonts-9644e21d.css">
+        <link rel="stylesheet" href="../../fonts/fonts-9644e21d.css">
 
         <!-- Highlight.js Stylesheets -->
-        <link rel="stylesheet" id="mdbook-highlight-css" href="highlight-493f70e1.css">
-        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="tomorrow-night-4c0ae647.css">
-        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="ayu-highlight-3fdfc3ac.css">
+        <link rel="stylesheet" id="mdbook-highlight-css" href="../../highlight-493f70e1.css">
+        <link rel="stylesheet" id="mdbook-tomorrow-night-css" href="../../tomorrow-night-4c0ae647.css">
+        <link rel="stylesheet" id="mdbook-ayu-highlight-css" href="../../ayu-highlight-3fdfc3ac.css">
 
         <!-- Custom theme stylesheets -->
 
 
         <!-- Provide site root and default themes to javascript -->
         <script>
-            const path_to_root = "";
+            const path_to_root = "../../";
             const default_light_theme = "light";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-7897e4c6.js";
+            window.path_to_searchindex_js = "../../searchindex-7897e4c6.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-b8315fb0.js?v=l30"></script>
+        <script src="../../toc-b8315fb0.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -105,7 +105,7 @@
             <!-- populated by js -->
             <mdbook-sidebar-scrollbox class="sidebar-scrollbox"></mdbook-sidebar-scrollbox>
             <noscript>
-                <iframe class="sidebar-iframe-outer" src="toc.html?v=l30-hands"></iframe>
+                <iframe class="sidebar-iframe-outer" src="../../toc.html?v=l30-hands"></iframe>
             </noscript>
             <div id="mdbook-sidebar-resize-handle" class="sidebar-resize-handle">
                 <div class="sidebar-resize-indicator"></div>
@@ -140,7 +140,7 @@
                     <h1 class="menu-title">Realhand Python SDK Documentation</h1>
 
                     <div class="right-buttons">
-                        <a href="print.html" title="Print this book" aria-label="Print this book">
+                        <a href="../../print.html" title="Print this book" aria-label="Print this book">
                             <span class=fa-svg id="print-button"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M128 0C92.7 0 64 28.7 64 64v96h64V64H354.7L384 93.3V160h64V93.3c0-17-6.7-33.3-18.7-45.3L400 18.7C388 6.7 371.7 0 354.7 0H128zM384 352v32 64H128V384 368 352H384zm64 32h32c17.7 0 32-14.3 32-32V256c0-35.3-28.7-64-64-64H64c-35.3 0-64 28.7-64 64v96c0 17.7 14.3 32 32 32H64v64c0 35.3 28.7 64 64 64H384c35.3 0 64-28.7 64-64V384zm-16-88c-13.3 0-24-10.7-24-24s10.7-24 24-24s24 10.7 24 24s-10.7 24-24 24z"/></svg></span>
                         </a>
 
@@ -174,44 +174,124 @@
 
                 <div id="mdbook-content" class="content">
                     <main>
-                        <h1 id="installation"><a class="header" href="#installation">Installation</a></h1>
-<p>Install with pip / uv:</p>
-<pre><code class="language-bash"># pip
-pip install git+https://github.com/RealHand-Robotics/realbot-python-sdk.git
+                        <h1 id="l30-dexterous-hand"><a class="header" href="#l30-dexterous-hand">L30 Dexterous Hand</a></h1>
+<p>L30 is a 17-joint dexterous hand with native integer position commands. The Python API connects directly to the hand; it does not require ROS 2, a ROS node, or a launch file.</p>
+<h2 id="requirements"><a class="header" href="#requirements">Requirements and Transport</a></h2>
+<p>The supplied metal USB CANFD analyser uses the vendor <code>libcanbus</code> transport. It is not a SocketCAN device and does not create <code>can0</code>. Install the vendor library and udev rule before starting Python:</p>
+<pre><code class="language-bash">sudo tar -xvf "libcanbus(ubuntu22).tar" -C /usr/local/lib/
+sudo ldconfig
+sudo install -m 644 99-canfd.rules /etc/udev/rules.d/99-canfd.rules
+sudo udevadm control --reload-rules
+sudo udevadm trigger
+</code></pre>
+<h2 id="quick-start"><a class="header" href="#quick-start">Quick Start</a></h2>
+<pre><code class="language-python">from realhand import L30
 
-# uv
-uv add "realhand @ git+https://github.com/RealHand-Robotics/realbot-python-sdk.git"
+# The default interface_type is "libcanbus" for the supplied USB CANFD analyser.
+with L30(side="left", canfd_id=0) as hand:
+    print(hand.protocol_version)  # "V6" or "V6.2"
+    print(hand.joint_names())
+    print(hand.joint_ranges())
+    print(hand.position.get())
 </code></pre>
-<p>Or install explicitly from the Git repository:</p>
-<pre><code class="language-bash"># pip
-pip install git+https://github.com/RealHand-Robotics/realbot-python-sdk.git
+<p><strong>Constructor parameters</strong></p>
+<div class="table-wrapper"><table><thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead><tbody>
+<tr><td><code>side</code></td><td><code>"left"</code> | <code>"right"</code></td><td>Required</td><td>Physical side of the hand.</td></tr>
+<tr><td><code>canfd_id</code></td><td><code>int</code></td><td><code>0</code></td><td>Vendor CANFD analyser channel.</td></tr>
+<tr><td><code>interface_type</code></td><td><code>"libcanbus"</code> | <code>"socketcan"</code></td><td><code>"libcanbus"</code></td><td>Use <code>libcanbus</code> for the supplied analyser. Use <code>socketcan</code> only with an actual Linux CAN interface.</td></tr>
+<tr><td><code>interface_name</code></td><td><code>str | None</code></td><td><code>None</code></td><td>SocketCAN interface name, for example <code>"can0"</code>.</td></tr>
+</tbody></table></div>
+<h2 id="native-joints"><a class="header" href="#native-joints">Native 17-Joint Vectors</a></h2>
+<p>Every command and reading is a vector of exactly 17 native integer values. Do not normalize the vector to 0–100: native values preserve the device resolution. Query <code>hand.joint_names()</code> and <code>hand.joint_ranges()</code> after connecting for the active firmware's authoritative order and ranges.</p>
+<div class="table-wrapper"><table><thead><tr><th>Index</th><th>V6 joint</th><th>Typical V6 position range</th></tr></thead><tbody>
+<tr><td>0–3</td><td>Thumb base, tip, side, rotation</td><td>0–1000, 0–1500, 0–1000, 0–900</td></tr>
+<tr><td>4–6</td><td>Ring side, tip, base</td><td>-200–200, 0–1500, 0–1600</td></tr>
+<tr><td>7–8</td><td>Middle base, tip</td><td>0–1600, 0–1500</td></tr>
+<tr><td>9–11</td><td>Little base, tip, side</td><td>0–1600, 0–1500, -200–200</td></tr>
+<tr><td>12–15</td><td>Middle side, index side, index base, index tip</td><td>-200–200, -200–200, 0–1600, 0–1500</td></tr>
+<tr><td>16</td><td>Wrist</td><td>-1000–1000</td></tr>
+</tbody></table></div>
+<h2 id="safe-motion"><a class="header" href="#safe-motion">Safe Motion Example</a></h2>
+<p>Connecting does <strong>not</strong> enable motors. Set operating parameters first, make sure the work area is safe, then enable motion. Position commands are rejected until <code>enable_all()</code> succeeds and are range-checked against the connected hand.</p>
+<pre><code class="language-python">from realhand import L30
 
-# uv
-uv add "realhand @ git+https://github.com/RealHand-Robotics/realbot-python-sdk.git"
-</code></pre>
-<h2 id="optional-dependencies"><a class="header" href="#optional-dependencies">Optional Dependencies</a></h2>
-<h3 id="kinetix-kinematics-required-for-arms"><a class="header" href="#kinetix-kinematics-required-for-arms">Kinetix (Kinematics, required for arms)</a></h3>
-<p>A7 Lite relies on <a href="https://github.com/stack-of-tasks/pinocchio">Pinocchio</a> for kinematics and requires an extra installation:</p>
-<pre><code class="language-bash"># pip (Linux / macOS)
-pip install "realhand[kinetix] @ git+https://github.com/RealHand-Robotics/realbot-python-sdk.git"
+with L30(side="left") as hand:
+    hand.speed.set([75] * 17)                 # V6: 0..150
+    hand.torque.set_commanded([100] * 17)     # V6: -2047..2047, 6.5 mA units
 
-# uv
-uv add "realhand[kinetix] @ git+https://github.com/RealHand-Robotics/realbot-python-sdk.git"
+    if hand.acceleration.supported:
+        hand.acceleration.set([128] * 17)     # V6: 0..254
+    if hand.torque_limit.supported:
+        hand.torque_limit.set([850] * 17)     # V6: 0..1000 = 0..100%
+
+    hand.enable_all()
+    try:
+        # Use a 17-value vector inside hand.joint_ranges().
+        hand.position.set(hand.position.get())
+    finally:
+        hand.disable_all()
 </code></pre>
-<blockquote>
-<p><strong>Windows users:</strong> Pinocchio does not support installation via <code>pip</code> on Windows. Use Conda instead:</p>
-<pre><code class="language-bash">conda install pinocchio -c conda-forge
+<p><code>torque.set_commanded()</code> sends commanded motor current; it is not a force command. <code>torque_limit</code> is the separate V6 current/torque threshold. Acceleration and torque-limit support depend on the selected protocol.</p>
+<h2 id="readbacks"><a class="header" href="#readbacks">Reading Hand State</a></h2>
+<div class="table-wrapper"><table><thead><tr><th>Manager</th><th>Reading</th></tr></thead><tbody>
+<tr><td><code>position</code>, <code>speed</code>, <code>torque</code></td><td>17 native feedback values.</td></tr>
+<tr><td><code>temperature</code>, <code>current</code>, <code>fault</code></td><td>17 motor temperatures, current values, and error codes.</td></tr>
+<tr><td><code>force_sensor</code></td><td>Five fingertip 12×6 pressure matrices.</td></tr>
+<tr><td><code>info</code></td><td>Protocol, firmware, mechanical, and available device metadata. V6 firmware does not expose a serial number through this protocol.</td></tr>
+</tbody></table></div>
+<pre><code class="language-python">with L30(side="left") as hand:
+    print(hand.position.get())
+    print(hand.temperature.get())
+    print(hand.current.get())
+    print(hand.fault.get().error_codes)
+    print(hand.force_sensor.get())
+    print(hand.info.get())
 </code></pre>
-</blockquote>
-<p>If you only use dexterous hands (L6 / L20Lite / L20 / L25, etc.), this dependency is not required.</p>
+<h2 id="streaming-and-snapshots"><a class="header" href="#streaming-and-snapshots">Streaming and Snapshots</a></h2>
+<p>Polling starts automatically. Reconfigure the sources and intervals when needed, then consume the single serialized event stream. This avoids overlapping synchronous CANFD requests.</p>
+<pre><code class="language-python">from realhand import L30
+from realhand.hand.l30 import PositionEvent, SensorSource, TemperatureEvent
+
+with L30(side="left") as hand:
+    hand.start_polling({
+        SensorSource.POSITION: 0.05,
+        SensorSource.TEMPERATURE: 1.0,
+        SensorSource.FORCE_SENSOR: 0.1,
+    })
+    stream = hand.stream()
+    for event in stream:
+        match event:
+            case PositionEvent(data=data):
+                print(data.positions)
+            case TemperatureEvent(data=data):
+                print(data.temperatures)
+                break
+
+    hand.stop_stream()
+    hand.stop_polling()
+
+# Cached values only: this does not send a new CAN request.
+snapshot = hand.get_snapshot()
+print(snapshot.position, snapshot.force_sensor)
+</code></pre>
+<h2 id="examples-and-gui"><a class="header" href="#examples-and-gui">Examples and GUI</a></h2>
+<p>The SDK includes focused examples under <code>examples/l30/</code>: connection lifecycle, enable/disable, safe position command, speed, acceleration, commanded current, torque limit, all readbacks, snapshots, streaming, and emergency stop.</p>
+<pre><code class="language-bash"># From the SDK checkout
+PYTHONPATH=src python3 examples/l30/read_info.py
+PYTHONPATH=src python3 examples/l30/read_touch.py
+PYTHONPATH=src python3 examples/l30/stream.py
+
+# Start the autodetecting GUI
+cd src/realhand
+python3 control_gui.py
+</code></pre>
 
                     </main>
 
                     <nav class="nav-wrapper" aria-label="Page navigation">
                         <!-- Mobile navigation buttons -->
-
-                            <a rel="next prefetch" href="guide/quickstart.html" class="mobile-nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                            <a rel="prev" href="../../reference/l25/version.html" class="mobile-nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                                <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                             </a>
 
                         <div style="clear: both"></div>
@@ -220,9 +300,8 @@ uv add "realhand[kinetix] @ git+https://github.com/RealHand-Robotics/realbot-pyt
             </div>
 
             <nav class="nav-wide-wrapper" aria-label="Page navigation">
-
-                    <a rel="next prefetch" href="guide/quickstart.html" class="nav-chapters next" title="Next chapter" aria-label="Next chapter" aria-keyshortcuts="Right">
-                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M278.6 233.4c12.5 12.5 12.5 32.8 0 45.3l-160 160c-12.5 12.5-32.8 12.5-45.3 0s-12.5-32.8 0-45.3L210.7 256 73.4 118.6c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0l160 160z"/></svg></span>
+                    <a rel="prev" href="../../reference/l25/version.html" class="nav-chapters previous" title="Previous chapter" aria-label="Previous chapter" aria-keyshortcuts="Left">
+                        <span class=fa-svg><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512"><!--! Font Awesome Free 6.2.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2022 Fonticons, Inc. --><path d="M41.4 233.4c-12.5 12.5-12.5 32.8 0 45.3l160 160c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L109.3 256 246.6 118.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0l-160 160z"/></svg></span>
                     </a>
             </nav>
 
@@ -241,13 +320,13 @@ uv add "realhand[kinetix] @ git+https://github.com/RealHand-Robotics/realbot-pyt
         </script>
 
 
-        <script src="elasticlunr-ef4e11c1.min.js"></script>
-        <script src="mark-09e88c2c.min.js"></script>
-        <script src="searcher-c2a407aa.js"></script>
+        <script src="../../elasticlunr-ef4e11c1.min.js"></script>
+        <script src="../../mark-09e88c2c.min.js"></script>
+        <script src="../../searcher-c2a407aa.js"></script>
 
-        <script src="clipboard-1626706a.min.js"></script>
-        <script src="highlight-abc7f01d.js"></script>
-        <script src="book-a0b12cfe.js"></script>
+        <script src="../../clipboard-1626706a.min.js"></script>
+        <script src="../../highlight-abc7f01d.js"></script>
+        <script src="../../book-a0b12cfe.js"></script>
 
         <!-- Custom JS scripts -->
 
